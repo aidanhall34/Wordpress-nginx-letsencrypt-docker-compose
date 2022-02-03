@@ -33,7 +33,6 @@ docker-compose down
 # docker rm {COMPOSE_PROJECT_NAME}_certbot_1 {COMPOSE_PROJECT_NAME}_nginx_1
 # example
 docker rm wptest_certbot_1 wptest_nginx_1
-
 docker volume rm certbot_certs
 docker volume create --name=certbot_certs
 ```
