@@ -1,0 +1,43 @@
+server_names_hash_bucket_size 64;
+
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot${DOMAIN};
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen       443 ssl;
+    server_name  ${DOMAIN};
+
+    ssl_certificate /etc/nginx/ssl/dummy/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/dummy/${DOMAIN}/privkey.pem;
+
+    include /etc/nginx/options-ssl-nginx.conf;
+
+    ssl_dhparam /etc/nginx/ssl/ssl-dhparams.pem;
+
+    include /etc/nginx/hsts.conf;
+
+location / {
+   proxy_set_header X-Real-IP $remote_addr;
+   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+   proxy_set_header X-NginX-Proxy true;
+   proxy_pass http://${COMPOSE_PROJECT_NAME}_wordpress_1/;
+   proxy_ssl_session_reuse off;
+   proxy_set_header Host $http_host;
+   proxy_cache_bypass $http_upgrade;
+   proxy_redirect off;
+  }
+  location /.well-known/acme-challenge/{
+      root /var/www/certbot/${DOMAIN};
+  }
+   
+}

@@ -1,0 +1,3 @@
+wordpress/config.env
+*.env
+.env

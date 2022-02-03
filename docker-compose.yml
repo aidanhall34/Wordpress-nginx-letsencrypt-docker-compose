@@ -1,0 +1,76 @@
+version: "3.9"
+services:
+  nginx:
+    environment:
+      COMPOSE_PROJECT_NAME: "${COMPOSE_PROJECT_NAME}"
+      DOMAIN: "${DOMAIN}"
+    build: ./nginx
+    image: nginx
+    env_file: "./config.env"
+    volumes:
+      - nginx_ssl:/etc/nginx/ssl
+      - certbot_certs:/etc/letsencrypt
+      - "wpsite_certbot:/var/www/certbot/${DOMAIN}"
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    depends_on:
+      - wordpress 
+  certbot:
+    env_file: "./config.env"
+    build: ./certbot
+    image: certbot
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - "wpsite_certbot:/var/www/certbot/${DOMAIN}"
+    depends_on:
+      - nginx
+  cron:
+    build: ./cron
+    image: cron
+    environment:
+      COMPOSE_PROJECT_NAME: "${COMPOSE_PROJECT_NAME}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/workdir:ro
+    depends_on:
+      - nginx
+      - certbot
+  db:
+    env_file: 
+      - ./config.env
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}" 
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+  wordpress:
+    depends_on:
+      - db
+    env_file:
+      - config.env
+    image: wordpress:latest
+    volumes:
+      - wordpress_data:/var/www/html
+    ports:
+      - "80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: "${WORDPRESS_DB_HOST}"
+      WORDPRESS_DB_USER: "${WORDPRESS_DB_USER}"
+      WORDPRESS_DB_PASSWORD: "${WORDPRESS_DB_PASSWORD}"
+      WORDPRESS_DB_NAME: "${WORDPRESS_DB_NAME}"
+
+volumes:
+  db_data: {}
+  wordpress_data: {}
+  nginx_ssl:
+    external: true
+  certbot_certs:
+    external: true
+  wpsite_certbot:
