@@ -57,8 +57,6 @@ services:
     image: wordpress:latest
     volumes:
       - wordpress_data:/var/www/html
-    ports:
-      - "80"
     restart: always
     environment:
       WORDPRESS_DB_HOST: "${WORDPRESS_DB_HOST}"
